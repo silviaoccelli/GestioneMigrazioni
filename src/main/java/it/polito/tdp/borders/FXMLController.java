@@ -5,9 +5,11 @@
 package it.polito.tdp.borders;
 
 import java.net.URL;
+import java.util.List;
 import java.util.ResourceBundle;
 
 import it.polito.tdp.borders.model.Country;
+import it.polito.tdp.borders.model.CountryAndNumber;
 import it.polito.tdp.borders.model.Model;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -37,35 +39,48 @@ public class FXMLController {
     @FXML
     void doCalcolaConfini(ActionEvent event) {
     	txtResult.clear();
-    	String annoS = txtAnno.getText();
-		try {
-			int anno = Integer.parseInt(annoS);
-
-			model.creaGrafo(anno);
-			
-			
-			//calcola numero di confini
-			// TODO
-			
-
-		} catch (NumberFormatException e) {
-			txtResult.appendText("Errore di formattazione dell'anno\n");
-			return;
-		}
+    	Integer anno;
+    	String a = txtAnno.getText();
+    	
+    	try{
+    		anno = Integer.parseInt(a);
+    	if(anno < 1816 || anno > 2016) {
+    		txtResult.appendText("Bisogna inserire un anno compreso tra il 1816 e 2016");
+    		return;
+    	}
+    	model.creaGrafo(anno);
+    	
+    	boxNazione.getItems().addAll(this.model.getCountries());
+    	
+    	//calcola il numero di confini
+    	List<CountryAndNumber> result = model.getCountyAndNumbers();
+    	
+    	for(CountryAndNumber c: result) {
+    		txtResult.appendText(c.toString() + "\n");
+    	}
+    	
+    	}catch(NumberFormatException e) {
+    		txtResult.appendText("Errore di formattazone dell'anno \n ");
+    		return;
+    	}
     }
 
     @FXML
     void doSimula(ActionEvent event) {
-    	
     	txtResult.clear();
     	Country partenza = boxNazione.getValue();
     	if(partenza == null) {
-    		txtResult.setText("SELEZIONA STATO!\n");
+    		txtResult.setText("Bisogna selezionare uno stato");
     		return;
     	}
-    	txtResult.appendText("SIMULAZIONE A PARTIRE DA: " + partenza +"\n\n");
+    	txtResult.appendText("Simulazione a partire da: " + partenza + "\n \n");
+    	this.model.simula(partenza);
+    	txtResult.appendText("numero di passi simulati: " + this.model.getT() + "\n\n");
+  
+    	for(CountryAndNumber cn: this.model.getStaziali()) {
+    		txtResult.appendText(cn.toString() +"\n");
+    	}
     	
-    	//TODO
     }
 
     @FXML // This method is called by the FXMLLoader when initialization is complete
@@ -77,5 +92,6 @@ public class FXMLController {
     
     public void setModel(Model model) {
     	this.model = model;
-    }
+    	
+}
 }

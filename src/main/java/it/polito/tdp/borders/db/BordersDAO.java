@@ -1,5 +1,6 @@
 package it.polito.tdp.borders.db;
 
+
 import it.polito.tdp.borders.model.Adiacenza;
 import it.polito.tdp.borders.model.Country;
 
@@ -14,7 +15,7 @@ import java.util.Map;
 
 public class BordersDAO {
 	
-	public List<Country> loadAllCountries(Map<Integer,Country> countriesMap) {
+	public List<Country> loadAllCountries(Map<Integer,Country> idMap) {
 		
 		String sql = 
 				"SELECT ccode,StateAbb,StateNme " +
@@ -23,32 +24,26 @@ public class BordersDAO {
 
 		try {
 			Connection conn = DBConnect.getConnection() ;
-
-			PreparedStatement st = conn.prepareStatement(sql) ;
-			
-			ResultSet rs = st.executeQuery() ;
-			
+		PreparedStatement st = conn.prepareStatement(sql) ;
+				ResultSet rs = st.executeQuery() ;
 			List<Country> list = new LinkedList<Country>() ;
 			
 			while( rs.next() ) {
 				
-				if(countriesMap.get(rs.getInt("ccode")) == null){
+				if(idMap.get(rs.getInt("ccode")) == null){
 				
 					Country c = new Country(
 							rs.getInt("ccode"),
 							rs.getString("StateAbb"), 
 							rs.getString("StateNme")) ;
-					countriesMap.put(c.getcCode(), c);
+					idMap.put(c.getcCode(), c);
 					list.add(c);
 				} else 
-					list.add(countriesMap.get(rs.getInt("ccode")));
+					list.add(idMap.get(rs.getInt("ccode")));
 			}
 			
 			conn.close() ;
-			
 			return list ;
-			
-			
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -57,82 +52,79 @@ public class BordersDAO {
 		return null ;
 	}
 	
-	public List<Country> getCountriesFromYear(int anno,Map<Integer,Country> countriesMap) {
-		String sql = "select * from country " + 
-				"where CCode in ( " + 
-				"select state1no " + 
-				"from contiguity " + 
-				"where year<=? and conttype=1)" ;
+	public List<Country> getVertici (Integer anno, Map<Integer, Country> idMap){
+		String sql = " SELECT * "
+				+ "FROM country "
+				+ "WHERE CCode IN ( "
+				+ "SELECT state1no "
+				+ "FROM contiguity "
+				+ "WHERE year <= ? "
+				+ "AND conttype = 1) " ;
 		
+		
+		List<Country> result = new LinkedList<Country>() ;
+		Connection conn = DBConnect.getConnection() ;
+
 		try {
-			Connection conn = DBConnect.getConnection() ;
 
 			PreparedStatement st = conn.prepareStatement(sql) ;
-			
 			st.setInt(1, anno);
 			ResultSet rs = st.executeQuery() ;
 			
-			List<Country> list = new LinkedList<Country>() ;
-			
-			while( rs.next() ) {
+		while( rs.next() ) {
+				if(idMap.get(rs.getInt("ccode")) == null){
 				
-				if(countriesMap.get(rs.getInt("ccode")) == null){
-					Country c = new Country(
-							rs.getInt("ccode"),
-							rs.getString("StateAbb"), 
-							rs.getString("StateNme")) ;
-					countriesMap.put(c.getcCode(), c);
-					list.add(c);
-				} else 
-					list.add(countriesMap.get(rs.getInt("ccode")));
-			}
-			
-			conn.close() ;
-			
-			return list ;
-			
-			
+				Country c = new Country(
+						rs.getInt("ccode"),
+						rs.getString("StateAbb"), 
+						rs.getString("StateNme")) ;
+				idMap.put(c.getcCode(), c);
+			result.add(c);
+			} else 
+			result.add(idMap.get(rs.getInt("ccode")));
+		}
+		
+		conn.close() ;
+		return result ;
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		
 		return null ;
-
 	}
-	
-	public List<Adiacenza> getCoppieAdiacenti(int anno) {
-		String sql = "select state1no, state2no " + 
-				"from contiguity " + 
-				"where year<=? " + 
-				"and conttype=1 " + 
-				"and state1no < state2no" ;
-		
-		List<Adiacenza> result = new ArrayList<>() ;
-		
+
+
+	public List<Adiacenza> getAdiacenze(Integer anno) {
+		String sql="SELECT state1no, state2no "
+				+ "FROM contiguity "
+				+ "WHERE year <= ? "
+				+ "AND conttype = 1 "
+				+ "AND state1no < state2no ";
+		List<Adiacenza> result = new ArrayList<>();
+		Connection conn = DBConnect.getConnection() ;
+
 		try {
-			Connection conn = DBConnect.getConnection() ;
 
 			PreparedStatement st = conn.prepareStatement(sql) ;
-			
 			st.setInt(1, anno);
-			
 			ResultSet rs = st.executeQuery() ;
 			
-			while(rs.next()) {
-				result.add(new Adiacenza(rs.getInt("state1no"), rs.getInt("state2no"))) ;
+	
+			while( rs.next() ) {
+				result.add(new Adiacenza(rs.getInt("state1no"), rs.getInt("state2no")));
 			}
 			
-			conn.close();
-			return result ;
+			conn.close() ;
+		   return result ;
+              } catch (SQLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 			
-		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
 			return null ;
-		}
-		
 	}
+	
 	
 	
 	
